@@ -176,19 +176,17 @@ function draw(){
   ctx.clearRect(0,0,size,size);
   ctx.save();ctx.translate(c,c);ctx.rotate(rot);
   S.prizes.forEach((p,i)=>{
-    const a0=i*seg,a1=a0+seg,fill=i%2?PURPLE:WHITE;
+    const odd=N()%2===1&&i===N()-1;
+    const a0=i*seg,a1=a0+seg,fill=odd?PURPLE_HI:(i%2?PURPLE:WHITE);
     ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,R,a0,a1);ctx.closePath();
-const odd=N()%2===1&&i===N()-1;
-const a0=i*seg,a1=a0+seg,fill=odd?PURPLE_HI:(i%2?PURPLE:WHITE);
-
+    ctx.fillStyle=fill;ctx.fill();
     ctx.save();
     const mid=a0+seg/2;ctx.rotate(mid);
     // keep text upright on the left half of the screen
     const screen=((mid+rot)%(2*Math.PI)+2*Math.PI)%(2*Math.PI);
     const flip=screen>Math.PI/2&&screen<Math.PI*1.5;
     ctx.translate(R*0.6,0);if(flip)ctx.rotate(Math.PI);
-ctx.fillStyle=(i%2||odd)?WHITE:INK;
-
+    ctx.fillStyle=(i%2||odd)?WHITE:INK;
     let fs=Math.max(11,size*0.052);ctx.font='600 '+fs+'px Outfit, system-ui, sans-serif';
     const maxW=R*0.62;while(ctx.measureText(p.name).width>maxW&&fs>9){fs-=1;ctx.font='600 '+fs+'px Outfit, system-ui, sans-serif'}
     ctx.textAlign='center';ctx.textBaseline='middle';
@@ -198,6 +196,7 @@ ctx.fillStyle=(i%2||odd)?WHITE:INK;
   ctx.beginPath();ctx.arc(0,0,R,0,2*Math.PI);ctx.lineWidth=6;ctx.strokeStyle=WHITE;ctx.stroke();
   ctx.restore();
 }
+
 
 // sound
 let AC=null;
