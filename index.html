@@ -141,17 +141,29 @@ const DEFAULT={headline:'Spin to Win',logo:null,spins:0,prizes:[
   {name:'Notebook Kit',weight:10,stock:50,given:0},
   {name:'Pop socket',weight:20,stock:100,given:0},
   {name:'Card Holder',weight:15,stock:80,given:0},
-  {name:'Speakers Pen',weight:6,stock:30,given:0},
+  {name:'Speakers',weight:3,stock:15,given:0},
+  {name:'Pen',weight:3,stock:15,given:0},
   {name:'Laptop Stickers',weight:25,stock:150,given:0},
   {name:'Flasks',weight:10,stock:50,given:0}
 ]};
 let S;
 try{S=JSON.parse(localStorage.getItem(KEY))||null}catch(e){S=null}
 if(!S||!Array.isArray(S.prizes))S=JSON.parse(JSON.stringify(DEFAULT));
+  // migrate: split old combined "Speakers Pen" into two prizes
+(function(){
+  const i=S.prizes.findIndex(p=>/^speakers?\s*pen$/i.test(p.name));
+  if(i<0)return;
+  const p=S.prizes[i],h=n=>Math.ceil((+n||0)/2);
+  S.prizes.splice(i,1,
+    {name:'Speakers',weight:h(p.weight),stock:h(p.stock),given:h(p.given)},
+    {name:'Pen',weight:(+p.weight||0)-h(p.weight),stock:(+p.stock||0)-h(p.stock),given:(+p.given||0)-h(p.given)});
+  save();
+})();
+
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 
 const cv=document.getElementById('wheel'),ctx=cv.getContext('2d');
-const PURPLE='#641e8c',WHITE='#ffffff',INK='#2a0f52';
+const PURPLE='#641e8c',PURPLE_HI='#8a3fc0',WHITE='#ffffff',INK='#2a0f52';
 let rot=0,spinning=false,size=0;
 const N=()=>S.prizes.length, SEG=()=>2*Math.PI/N();
 
@@ -166,14 +178,17 @@ function draw(){
   S.prizes.forEach((p,i)=>{
     const a0=i*seg,a1=a0+seg,fill=i%2?PURPLE:WHITE;
     ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,R,a0,a1);ctx.closePath();
-    ctx.fillStyle=fill;ctx.fill();
+const odd=N()%2===1&&i===N()-1;
+const a0=i*seg,a1=a0+seg,fill=odd?PURPLE_HI:(i%2?PURPLE:WHITE);
+
     ctx.save();
     const mid=a0+seg/2;ctx.rotate(mid);
     // keep text upright on the left half of the screen
     const screen=((mid+rot)%(2*Math.PI)+2*Math.PI)%(2*Math.PI);
     const flip=screen>Math.PI/2&&screen<Math.PI*1.5;
     ctx.translate(R*0.6,0);if(flip)ctx.rotate(Math.PI);
-    ctx.fillStyle=i%2?WHITE:INK;
+ctx.fillStyle=(i%2||odd)?WHITE:INK;
+
     let fs=Math.max(11,size*0.052);ctx.font='600 '+fs+'px Outfit, system-ui, sans-serif';
     const maxW=R*0.62;while(ctx.measureText(p.name).width>maxW&&fs>9){fs-=1;ctx.font='600 '+fs+'px Outfit, system-ui, sans-serif'}
     ctx.textAlign='center';ctx.textBaseline='middle';
